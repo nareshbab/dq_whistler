@@ -72,6 +72,6 @@ class DataSource(ABC):
 		pass
 
 	@abstractmethod
-	def run(self):
+	def run_quality_checks(self):
 		pass
 
