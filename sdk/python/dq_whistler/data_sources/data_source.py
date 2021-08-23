@@ -15,7 +15,7 @@ class DataSourceOptions(ABC):
 	"""
 	Base abstract class for defining options for a data source
 	Args:
-		source_options: Dict config for all source related options
+		source_options: Dict resources for all source related options
 	"""
 
 	_source_options: Dict[str, str]
@@ -35,7 +35,7 @@ class DataSource(ABC):
 	"""
 	Base abstract class for defining DataSource
 	Args:
-		quality_config (optional): Dict config map for column level checks
+		quality_config (optional): Dict resources map for column level checks
 	"""
 
 	_quality_config: Dict[str, str]
@@ -59,12 +59,12 @@ class DataSource(ABC):
 
 	@property
 	def quality_config(self) -> Dict[str, str]:
-		"""Returns the quality config for this datasource"""
+		"""Returns the quality resources for this datasource"""
 		return self._quality_config
 
 	@quality_config.setter
 	def quality_config(self, quality_config):
-		"""Setting up the quality config for this datasource"""
+		"""Setting up the quality resources for this datasource"""
 		self._quality_config = quality_config
 
 	@abstractmethod

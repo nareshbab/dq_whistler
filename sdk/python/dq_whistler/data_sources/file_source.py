@@ -105,7 +105,7 @@ class FileSource(DataSource):
 		)
 
 	def validate(self):
-		"""validates the quality config"""
+		"""validates the quality resources"""
 		raise NotImplementedError
 
 	def read(self):

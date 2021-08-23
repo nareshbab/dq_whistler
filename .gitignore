@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# dq_whistler exlusions
+sdk/python/dq_whistler/data
+
 # Distribution / packaging
 .Python
 .idea/
