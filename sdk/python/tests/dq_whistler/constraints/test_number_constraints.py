@@ -5,7 +5,7 @@ from pyspark.sql.session import SparkSession
 from dq_whistler.constraints.number_type import *
 from tests.dq_whistler.resources.configuration import number_constraints
 
-log= logging.getLogger( "SomeTest.testSomething" )
+log = logging.getLogger("SomeTest.testSomething")
 
 
 class NumberConstraintTests(unittest.TestCase):
@@ -15,7 +15,6 @@ class NumberConstraintTests(unittest.TestCase):
 	spark_session: SparkSession
 	column_data: DataFrame
 	column_name: str = "number_col"
-	constriants: Dict[str, Any]
 
 	def setUp(self):
 		"""
@@ -28,40 +27,124 @@ class NumberConstraintTests(unittest.TestCase):
 		pass
 
 	def test_equal_pass(self):
-		self.column_data = self.spark_session.createDataFrame([(1, ), (1, )]).toDF(self.column_name)
+		self.column_data = self.spark_session.createDataFrame([(5, ), (5, )]).toDF(self.column_name)
 		constraint = number_constraints["eq"]
 		output = Equal(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
 		self.assertConstraintPass(output, constraint=constraint)
 
 	def test_equal_fail(self):
-		pass
+		self.column_data = self.spark_session.createDataFrame([(5,), (1,)]).toDF(self.column_name)
+		constraint = number_constraints["eq"]
+		output = Equal(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=1, test_result=output, constraint=constraint)
 
-	def test_not_equal(self):
-		pass
+	def test_not_equal_pass(self):
+		self.column_data = self.spark_session.createDataFrame([(1,), (1,)]).toDF(self.column_name)
+		constraint = number_constraints["not_eq"]
+		output = NotEqual(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintPass(test_result=output, constraint=constraint)
 
-	def test_less_than(self):
-		pass
+	def test_not_equal_fail(self):
+		self.column_data = self.spark_session.createDataFrame([(5,), (1,)]).toDF(self.column_name)
+		constraint = number_constraints["not_eq"]
+		output = NotEqual(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=5, test_result=output, constraint=constraint)
 
-	def test_greater_than(self):
-		pass
+	def test_less_than_pass(self):
+		self.column_data = self.spark_session.createDataFrame([(1,), (1,)]).toDF(self.column_name)
+		constraint = number_constraints["lt"]
+		output = LessThan(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintPass(test_result=output, constraint=constraint)
 
-	def test_less_than_equal_to(self):
-		pass
+	def test_less_than_fail(self):
+		self.column_data = self.spark_session.createDataFrame([(6,), (1,)]).toDF(self.column_name)
+		constraint = number_constraints["lt"]
+		output = LessThan(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=6, test_result=output, constraint=constraint)
 
-	def test_greater_than_equal_to(self):
-		pass
+	def test_greater_than_pass(self):
+		self.column_data = self.spark_session.createDataFrame([(6,), (7,)]).toDF(self.column_name)
+		constraint = number_constraints["gt"]
+		output = GreaterThan(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintPass(test_result=output, constraint=constraint)
 
-	def test_between(self):
-		pass
+	def test_greater_than_fail(self):
+		self.column_data = self.spark_session.createDataFrame([(6,), (1,)]).toDF(self.column_name)
+		constraint = number_constraints["gt"]
+		output = GreaterThan(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=1, test_result=output, constraint=constraint)
 
-	def test_not_between(self):
-		pass
+	def test_less_than_equal_to_pass(self):
+		self.column_data = self.spark_session.createDataFrame([(5,), (1,)]).toDF(self.column_name)
+		constraint = number_constraints["lt_eq"]
+		output = LessThanEqualTo(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintPass(test_result=output, constraint=constraint)
 
-	def test_is_in(self):
-		pass
+	def test_less_than_equal_to_fail(self):
+		self.column_data = self.spark_session.createDataFrame([(6,), (5,)]).toDF(self.column_name)
+		constraint = number_constraints["lt_eq"]
+		output = LessThanEqualTo(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=6, test_result=output, constraint=constraint)
 
-	def test_not_in(self):
-		pass
+	def test_greater_than_equal_to_pass(self):
+		self.column_data = self.spark_session.createDataFrame([(5,), (6,)]).toDF(self.column_name)
+		constraint = number_constraints["gt_eq"]
+		output = GreaterThanEqualTo(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintPass(test_result=output, constraint=constraint)
+
+	def test_greater_than_equal_to_fail(self):
+		self.column_data = self.spark_session.createDataFrame([(1,), (5,)]).toDF(self.column_name)
+		constraint = number_constraints["gt_eq"]
+		output = GreaterThanEqualTo(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=1, test_result=output, constraint=constraint)
+
+	def test_between_pass(self):
+		self.column_data = self.spark_session.createDataFrame([(5,), (7,), (9,)]).toDF(self.column_name)
+		constraint = number_constraints["between"]
+		output = Between(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintPass(test_result=output, constraint=constraint)
+
+	def test_between_fail(self):
+		self.column_data = self.spark_session.createDataFrame([(1,), (5,)]).toDF(self.column_name)
+		constraint = number_constraints["between"]
+		output = Between(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=1, test_result=output, constraint=constraint)
+
+	def test_not_between_pass(self):
+		self.column_data = self.spark_session.createDataFrame([(4,), (10,)]).toDF(self.column_name)
+		constraint = number_constraints["not_between"]
+		output = NotBetween(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintPass(test_result=output, constraint=constraint)
+
+	def test_not_between_fail(self):
+		self.column_data = self.spark_session.createDataFrame([(1,), (5,)]).toDF(self.column_name)
+		constraint = number_constraints["not_between"]
+		output = NotBetween(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=5, test_result=output, constraint=constraint)
+
+	def test_is_in_pass(self):
+		self.column_data = self.spark_session.createDataFrame([(5,), (7,)]).toDF(self.column_name)
+		constraint = number_constraints["is_in"]
+		output = IsIn(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintPass(test_result=output, constraint=constraint)
+
+	def test_is_in_fail(self):
+		self.column_data = self.spark_session.createDataFrame([(1,), (5,)]).toDF(self.column_name)
+		constraint = number_constraints["is_in"]
+		output = IsIn(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=1, test_result=output, constraint=constraint)
+
+	def test_not_in_pass(self):
+		self.column_data = self.spark_session.createDataFrame([(4,), (10,)]).toDF(self.column_name)
+		constraint = number_constraints["not_in"]
+		output = NotIn(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintPass(test_result=output, constraint=constraint)
+
+	def test_not_in_fail(self):
+		self.column_data = self.spark_session.createDataFrame([(1,), (5,)]).toDF(self.column_name)
+		constraint = number_constraints["not_in"]
+		output = NotIn(constraint=constraint, column_name=self.column_name).execute_check(self.column_data)
+		self.assertConstraintFail(invalid_count=1, invalid_value=5, test_result=output, constraint=constraint)
 
 	def assertConstraintPass(self, test_result: Dict[str, Any], constraint: Dict[str, Any]) -> None:
 		return self.assertEqual(
@@ -70,5 +153,21 @@ class NumberConstraintTests(unittest.TestCase):
 				"constraint_status": "success",
 				"invalid_count": 0,
 				"invalid_values": []
+			}
+		)
+
+	def assertConstraintFail(
+			self,
+			invalid_count: int,
+			invalid_value: int,
+			test_result: Dict[str, Any],
+			constraint: Dict[str, Any]
+	) -> None:
+		return self.assertEqual(
+			test_result, {
+				**constraint,
+				"constraint_status": "failed",
+				"invalid_count": invalid_count,
+				"invalid_values": [invalid_value]
 			}
 		)
