@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="dq_whistler",                     # This is the name of the package
-    version="0.0.1-alpha.1",                        # The initial release version
+    version="0.0.1-alpha.2",                        # The initial release version
     author="Naresh Kumar",                     # Full name of the author
     author_email='nareshbabral@gmail.com',
     description="A comprehensive library for data quality checks",
