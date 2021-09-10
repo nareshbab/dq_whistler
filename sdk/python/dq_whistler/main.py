@@ -40,16 +40,16 @@ spark = (
       .getOrCreate()
    )
 df = spark.read.option("header", "true").csv("data/sample_data.csv")
-pip install toko_dq_shisteler
-import DQA from dqhi
-constriant_output (json -> pandas df) = DataQualityAnalyzer(df, config).analyze()
-
-DataQualityAnalyzer(df, config)
-.ismin("col", "5")
-.ismax("col5", 10)
-.regex("")
-...
-.run()
+# pip install toko_dq_shisteler
+# import DQA from dqhi
+# constriant_output (json -> pandas df) = DataQualityAnalyzer(df, config).analyze()
+#
+# DataQualityAnalyzer(df, config)
+# .ismin("col", "5")
+# .ismax("col5", 10)
+# .regex("")
+# ...
+# .run()
 
 
 (seong, Nathan, Gaurav)

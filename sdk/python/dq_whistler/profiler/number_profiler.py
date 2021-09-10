@@ -8,17 +8,36 @@ import json
 
 class NumberProfiler(ColumnProfiler):
 	"""
-
+	Class for Numeric datatype profiler
 	"""
 
 	def __init__(self, column_data: DataFrame, config: Dict[str, str]):
+		"""
+		Creates an instance of :obj:`NumberProfiler`
+		Args:
+			column_data (pyspark.sql.DataFrame): Column data as a spark dataframe to execute constraints
+			config (Dict[str, Any]): Config containing all the constraints of a column along with expected datatypes
+			{
+				"name": "col_name",
+				"datatype": "col_data_type(number/string/date)",
+				"constraints":[
+				{
+					"name": "gt_eq",
+					"values": 5
+				},
+				{
+					"name": "is_in",
+					"values": [1, 2]
+				}...
+				]
+			}
+		"""
 		super(NumberProfiler, self).__init__(column_data, config)
 
-	def get_min_value(self):
+	def get_min_value(self) -> float:
 		"""
-
 		Returns:
-
+			:obj:`float`: Min value of the column data
 		"""
 		min_value = json.loads(self._column_data.select(
 			f.min(
@@ -28,11 +47,10 @@ class NumberProfiler(ColumnProfiler):
 		).toJSON().take(1)[0])["min"]
 		return min_value
 
-	def get_max_value(self):
+	def get_max_value(self) -> float:
 		"""
-
 		Returns:
-
+			:obj:`float`: Max value of the column data
 		"""
 		max_value = json.loads(self._column_data.select(
 			f.max(
@@ -42,11 +60,10 @@ class NumberProfiler(ColumnProfiler):
 		).toJSON().take(1)[0])["max"]
 		return max_value
 
-	def get_mean_value(self):
+	def get_mean_value(self) -> float:
 		"""
-
 		Returns:
-
+			:obj:`float`: Mean value of the column data
 		"""
 		mean_value = json.loads(self._column_data.select(
 			f.mean(
@@ -56,11 +73,10 @@ class NumberProfiler(ColumnProfiler):
 		).toJSON().take(1)[0])["mean"]
 		return mean_value
 
-	def get_stddev_value(self):
+	def get_stddev_value(self) -> float:
 		"""
-
 		Returns:
-
+			:obj:`float`: Standard deviation value of the column value
 		"""
 		stddev_value = json.loads(self._column_data.select(
 			f.stddev(
@@ -72,9 +88,29 @@ class NumberProfiler(ColumnProfiler):
 
 	def run(self) -> Dict[str, Any]:
 		"""
-
 		Returns:
-
+			:obj:`Dict[str, Any]`: The final dict with all the metrics of a numeric column
+			Example Output::
+				{
+					"total_count": 100,
+					"null_count": 50,
+					"unique_count": 20,
+					"topn_values": {"1": 24, "2": 25},
+					"min": 2.0,
+					"max": 30.0,
+					"mean": 18.0,
+					"stddev": 5.0,
+					"quality_score": 0,
+					"constraints": [
+						{
+							"name": "eq",
+							"values", 5,
+							"constraint_status": "failed/success",
+							"invalid_count": 21,
+							"invalid_values": [4, 6, 7, 1]
+						}
+					]
+				}
 		"""
 		column_name = self._column_name
 		for constraint in self._config.get("constraints"):

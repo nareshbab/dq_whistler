@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 # dq_whistler exlusions
-sdk/python/dq_whistler/data
+sdk/python/docs/build
 
 # Distribution / packaging
 .Python

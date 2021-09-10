@@ -6,17 +6,53 @@ from typing import Dict, Any
 
 class StringProfiler(ColumnProfiler):
 	"""
-
+	Class for String datatype profiler
 	"""
 
 	def __init__(self, column_data: DataFrame, config: Dict[str, str]):
+		"""
+		Creates an instance of Column Profiler
+		Args:
+			column_data (pyspark.sql.DataFrame): Column data as a spark dataframe to execute constraints
+			config (Dict[str, Any]): Config containing all the constraints of a column along with expected datatypes
+			{
+				"name": "col_name",
+				"datatype": "col_data_type(number/string/date)",
+				"constraints":[
+				{
+					"name": "contains",
+					"values": "abc"
+				},
+				{
+					"name": "is_in",
+					"values": ["abc", "xyz"]
+				}...
+				]
+			}
+		"""
 		super(StringProfiler, self).__init__(column_data, config)
 
 	def run(self) -> Dict[str, Any]:
 		"""
-
 		Returns:
-
+			:obj:`Dict[str, Any]`: The final dict with all the metrics of a string column
+			Example Output::
+				{
+					"total_count": 100,
+					"null_count": 50,
+					"unique_count": 20,
+					"topn_values": {"abc": 24, "xyz": 25},
+					"quality_score": 0,
+					"constraints": [
+						{
+							"name": "eq",
+							"values", "abc",
+							"constraint_status": "failed/success",
+							"invalid_count": 21,
+							"invalid_values": ["xy", "ab", "abcd"]
+						}
+					]
+				}
 		"""
 		column_name = self._column_name
 		for constraint in self._config.get("constraints"):
