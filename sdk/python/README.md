@@ -64,7 +64,7 @@ print(output)
 ```python
 [
     {
-        "col_name": "col1",
+        "col_name": "Col1",
         "total_count": 18720,
         "null_count": 0,
         "unique_count": 10,
@@ -100,7 +100,7 @@ print(output)
         ]
     },
     {
-        "col_name": "Values",
+        "col_name": "Col2",
         "total_count": 18720,
         "null_count": 0,
         "unique_count": 5561,
