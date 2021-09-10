@@ -1,7 +1,7 @@
 
 ## Overview
 
-Whistler is an open source data quality and profiling tool. Whistler supports data profiling as well as running custom constraints on the data.
+Whistler is an open source data quality and profiling tool. Along with profiling it also supports running custom constraints on the data.
 With underlining support of Apache Spark execution engine Whistler can be extended to data in magnitudes of GB's, TB's. 
 
 
