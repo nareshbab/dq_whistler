@@ -13,6 +13,19 @@ pip install dq-whistler
 ```
 
 ### 2. Create a Spark dataframe for you data
+```commandline
+# Sample Data
+Age,Description
+1,"abc"
+2,"abc1"
+3,
+4,"abc4"
+10,"xyz"
+12,"null"
+17,"abc"
+20,"abc3"
+23,
+```
 ```python
 # You can read data from all the supported sources as per Apache Spark module
 df = spark.read.option("header", "true").csv("<your path>")
@@ -22,7 +35,22 @@ df = spark.read.option("header", "true").csv("<your path>")
 ```python
 config = [
    {
-      "name": "Col1",
+      "name": "Age",
+      "datatype": "number",
+      "constraints":[
+         {
+            "name": "gt_eq",
+            "values": 5
+         },
+         {
+            "name": "is_in",
+            "values": [1, 23]
+         }
+         
+      ]
+   },
+   {
+      "name": "Description",
       "datatype": "string",
       "constraints":[
          {
@@ -33,20 +61,7 @@ config = [
             "name": "contains",
             "values": "abc"
          }
-      ]
-   },
-   {
-      "name": "Col2",
-      "datatype": "number",
-      "constraints":[
-         {
-            "name": "gt_eq",
-            "values": 5
-         },
-         {
-            "name": "is_in",
-            "values": [1, 2]
-         }
+         
       ]
    }
 ]
@@ -64,81 +79,88 @@ print(output)
 ```python
 [
     {
-        "col_name": "Col1",
-        "total_count": 18720,
+        "col_name": "Age",
+        "total_count": 9,
         "null_count": 0,
-        "unique_count": 10,
+        "unique_count": 9,
         "topn_values": {
-            "2016.03": 1872,
-            "2010.03": 1872,
-            "2012.03": 1872,
-            "2015.03": 1872
+            "1": 1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "10": 1,
+            "12": 1,
+            "17": 1,
+            "20": 1,
+            "23": 1
         },
-        "quality_score": 0,
-        "constraints": [
-            {
-                "name": "regex",
-                "values": "([A-Za-z]+)",
-                "constraint_status": "failed",
-                "invalid_count": 18720,
-                "invalid_values": [
-                    "2008.03",
-                    "2009.03"
-                ]
-            },
-            {
-                "name": "contains",
-                "values": "abc",
-                "constraint_status": "failed",
-                "invalid_count": 18720,
-                "invalid_values": [
-                    "2008.03",
-                    "2009.03",
-                    "2010.03"
-                ]
-            }
-        ]
-    },
-    {
-        "col_name": "Col2",
-        "total_count": 18720,
-        "null_count": 0,
-        "unique_count": 5561,
-        "topn_values": {
-            "0": 6952,
-            "1": 82,
-            "2": 28,
-            "3": 32,
-            "5": 26,
-            "16": 36,
-        },
+        "min": 1,
+        "max": 23,
+        "mean": 10.222222222222221,
+        "stddev": 8.303279138054101,
         "quality_score": 0,
         "constraints": [
             {
                 "name": "gt_eq",
                 "values": 5,
                 "constraint_status": "failed",
-                "invalid_count": 9553,
+                "invalid_count": 4,
                 "invalid_values": [
-                    "-14407",
-                    "-16171",
-                    "-17160",
-                    "-17061"
+                    "1",
+                    "2",
+                    "3",
+                    "4"
                 ]
             },
             {
                 "name": "is_in",
                 "values": [
                     1,
-                    2
+                    23
                 ],
                 "constraint_status": "failed",
-                "invalid_count": 18610,
+                "invalid_count": 7,
                 "invalid_values": [
-                    "225544",
-                    "243315",
-                    "259381",
-                    "262596"
+                    "2",
+                    "3",
+                    "4",
+                    "10",
+                    "12",
+                    "17",
+                    "20"
+                ]
+            }
+        ]
+    },
+    {
+        "col_name": "Description",
+        "total_count": 9,
+        "null_count": 2,
+        "unique_count": 7,
+        "topn_values": {
+            "abc": 2,
+            "abc1": 1,
+            "xyz": 1,
+            "abc4": 1,
+            "abc3": 1
+        },
+        "quality_score": 0,
+        "constraints": [
+            {
+                "name": "regex",
+                "values": "([A-Za-z]+)",
+                "constraint_status": "success",
+                "invalid_count": 0,
+                "invalid_values": []
+            },
+            {
+                "name": "contains",
+                "values": "abc",
+                "constraint_status": "failed",
+                "invalid_count": 2,
+                "invalid_values": [
+                    "xyz",
+                    "null"
                 ]
             }
         ]

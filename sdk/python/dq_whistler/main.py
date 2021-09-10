@@ -3,9 +3,24 @@ from pyspark.sql.session import SparkSession
 
 config = [
    {
-      "name": "Year",
+      "name": "Age",
+      "datatype": "number",
+      "constraints": [
+         {
+            "name": "gt_eq",
+            "values": 5
+         },
+         {
+            "name": "is_in",
+            "values": [1, 23]
+         }
+
+      ]
+   },
+   {
+      "name": "Description",
       "datatype": "string",
-      "constraints":[
+      "constraints": [
          {
             "name": "regex",
             "values": "([A-Za-z]+)"
@@ -14,20 +29,7 @@ config = [
             "name": "contains",
             "values": "abc"
          }
-      ]
-   },
-   {
-      "name": "Values",
-      "datatype": "number",
-      "constraints":[
-         {
-            "name": "gt_eq",
-            "values": 5
-         },
-         {
-            "name": "is_in",
-            "values": [1, 2]
-         }
+
       ]
    }
 ]
@@ -39,7 +41,9 @@ spark = (
       .appName("whistler testing")
       .getOrCreate()
    )
-df = spark.read.option("header", "true").csv("data/sample_data.csv")
+df = spark.read.option("header", "true").csv("/Users/nareshkumar-mbp/Desktop/sample_data.csv")
+output = DataQualityAnalyzer(df, config).analyze()
+print(output)
 # pip install toko_dq_shisteler
 # import DQA from dqhi
 # constriant_output (json -> pandas df) = DataQualityAnalyzer(df, config).analyze()
@@ -50,8 +54,3 @@ df = spark.read.option("header", "true").csv("data/sample_data.csv")
 # .regex("")
 # ...
 # .run()
-
-
-(seong, Nathan, Gaurav)
-
-print(constriant_output)

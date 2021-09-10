@@ -154,16 +154,32 @@ class ColumnProfiler(ABC):
                     "value2": count2
                 }
         """
-        #TODO:: Remove null values before getting top n values
         col_name = self._column_name
         top_values = dict()
-        top_values_rows = self._column_data \
-            .groupby(col_name) \
-            .count() \
-            .sort(f.desc("count")) \
-            .toJSON() \
-            .take(10)
-        [top_values.update({json.loads(row)[col_name]: json.loads(row)["count"]}) for row in top_values_rows]
+        if self._data_type == "string":
+            top_values_rows = self._column_data \
+                .filter((f.col(col_name) != "") & (f.col(col_name).isNotNull()) & (f.col(col_name) != "null")) \
+                .groupby(col_name) \
+                .count() \
+                .sort(f.desc("count")) \
+                .toJSON() \
+                .take(10)
+        elif self._data_type == "number":
+            top_values_rows = self._column_data \
+                .filter(f.col(col_name).isNotNull()) \
+                .groupby(col_name) \
+                .count() \
+                .sort(f.desc("count")) \
+                .toJSON() \
+                .take(10)
+        else:
+            raise NotImplementedError
+
+        [
+            top_values.update(
+                {json.loads(row).get(col_name): json.loads(row)["count"]})
+            for row in top_values_rows
+        ]
         return top_values
 
     def get_custom_constraint_check(self) -> List[Dict[str, str]]:
