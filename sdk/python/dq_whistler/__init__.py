@@ -16,5 +16,5 @@ except DistributionNotFound:
     pass
 
 __all__ = [
-    DataQualityAnalyzer,
+    "DataQualityAnalyzer",
 ]
