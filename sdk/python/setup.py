@@ -10,7 +10,6 @@ setuptools.setup(
     author_email='nareshbabral@gmail.com',
     description="A comprehensive library for data quality checks",
     url="https://github.com/nareshbab/dq_whistler",
-    download_url="https://github.com/nareshbab/dq_whistler/archive/refs/tags/v0.0.1-alpha.3.tar.gz",
     license='MIT',
     long_description=long_description,      # Long description read from the the readme file
     long_description_content_type="text/markdown",
