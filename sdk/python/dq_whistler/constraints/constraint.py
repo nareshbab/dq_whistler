@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any
-from pyspark.sql.dataframe import DataFrame
+from typing import Dict, List, Any, Union
+from pandas.core.series import Series as pandas_df
+from pyspark.sql.dataframe import DataFrame as spark_df
 import json
 
 
@@ -40,31 +41,36 @@ class Constraint(ABC):
         return self._column_name
 
     @abstractmethod
-    def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+    def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
         """
         Args:
-            data_frame (:obj:`pyspark.sql.DataFrame`): The data as spark dataframe
+            data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
         Returns:
             :obj:`pyspark.sql.DataFrame`: The dataframe containing failed cases for a constraint
         """
         return data_frame
 
-    def get_sample_invalid_values(self, data_frame: DataFrame) -> List:
+    def get_sample_invalid_values(self, data_frame: Union[spark_df, pandas_df]) -> List:
         """
         Args:
-            data_frame (:obj:`pyspark.sql.DataFrame`): The data as spark dataframe
+            data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
         Returns:
             :obj:`list`: A list containing the invalid values as per the given constraint
         """
-        sample_invalid_values = [json.loads(row)[self._column_name] for row in data_frame.toJSON().take(10)]
+        sample_invalid_values = list()
+        if isinstance(data_frame, spark_df):
+            sample_invalid_values = [json.loads(row)[self._column_name] for row in data_frame.toJSON().take(10)]
+
+        if isinstance(data_frame, pandas_df):
+            sample_invalid_values = list(data_frame.iloc[0:9])
         return sample_invalid_values
 
-    def execute_check(self, data_frame: DataFrame) -> Dict[str, str]:
+    def execute_check(self, data_frame: Union[spark_df, pandas_df]) -> Dict[str, str]:
         """
         Args:
-            data_frame (:obj:`pyspark.sql.DataFrame`): The data as spark dataframe
+            data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
         Returns:
             :obj:`dict[str, str]`: The dict containing the final output for one constraint

@@ -1,6 +1,7 @@
 from dq_whistler.profiler.column_profiler import ColumnProfiler
 from dq_whistler.constraints.number_type import *
-from pyspark.sql import DataFrame
+from pandas.core.series import Series as pandas_df
+from pyspark.sql.dataframe import DataFrame as spark_df
 import pyspark.sql.functions as f
 from typing import Dict, Any
 import json
@@ -11,12 +12,12 @@ class NumberProfiler(ColumnProfiler):
 	Class for Numeric datatype profiler
 	"""
 
-	def __init__(self, column_data: DataFrame, config: Dict[str, str]):
+	def __init__(self, column_data: Union[spark_df, pandas_df], config: Dict[str, str]):
 		"""
 		Creates an instance of :obj:`NumberProfiler`
 		Args:
-			column_data (pyspark.sql.DataFrame): Column data as a spark dataframe to execute constraints
-			config (Dict[str, Any]): Config containing all the constraints of a column along with expected datatypes
+			column_data (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data to execute constraints
+			config (Dict[str, Any]): Config containing all the constraints of a column along with expected data types
 			{
 				"name": "col_name",
 				"datatype": "col_data_type(number/string/date)",
@@ -39,52 +40,64 @@ class NumberProfiler(ColumnProfiler):
 		Returns:
 			:obj:`float`: Min value of the column data
 		"""
-		min_value = json.loads(self._column_data.select(
-			f.min(
-				f.col(self._column_name)
-					.cast("double")
-			).alias("min")
-		).toJSON().take(1)[0])["min"]
-		return min_value
+		if isinstance(self._column_data, spark_df):
+			return float(json.loads(self._column_data.select(
+				f.min(
+					f.col(self._column_name)
+						.cast("double")
+				).alias("min")
+			).toJSON().take(1)[0])["min"])
+
+		if isinstance(self._column_data, pandas_df):
+			return float(self._column_data.min())
 
 	def get_max_value(self) -> float:
 		"""
 		Returns:
 			:obj:`float`: Max value of the column data
 		"""
-		max_value = json.loads(self._column_data.select(
-			f.max(
-				f.col(self._column_name)
-					.cast("double")
-			).alias("max")
-		).toJSON().take(1)[0])["max"]
-		return max_value
+		if isinstance(self._column_data, spark_df):
+			return float(json.loads(self._column_data.select(
+				f.max(
+					f.col(self._column_name)
+						.cast("double")
+				).alias("max")
+			).toJSON().take(1)[0])["max"])
+
+		if isinstance(self._column_data, pandas_df):
+			return float(self._column_data.max())
 
 	def get_mean_value(self) -> float:
 		"""
 		Returns:
 			:obj:`float`: Mean value of the column data
 		"""
-		mean_value = json.loads(self._column_data.select(
-			f.mean(
-				f.col(self._column_name)
-					.cast("double")
-			).alias("mean")
-		).toJSON().take(1)[0])["mean"]
-		return mean_value
+		if isinstance(self._column_data, spark_df):
+			return float(json.loads(self._column_data.select(
+				f.mean(
+					f.col(self._column_name)
+						.cast("double")
+				).alias("mean")
+			).toJSON().take(1)[0])["mean"])
+
+		if isinstance(self._column_data, pandas_df):
+			return float(self._column_data.mean())
 
 	def get_stddev_value(self) -> float:
 		"""
 		Returns:
 			:obj:`float`: Standard deviation value of the column value
 		"""
-		stddev_value = json.loads(self._column_data.select(
-			f.stddev(
-				f.col(self._column_name)
-					.cast("double")
-			).alias("stddev")
-		).toJSON().take(1)[0])["stddev"]
-		return stddev_value
+		if isinstance(self._column_data, spark_df):
+			return float(json.loads(self._column_data.select(
+				f.stddev(
+					f.col(self._column_name)
+						.cast("double")
+				).alias("stddev")
+			).toJSON().take(1)[0])["stddev"])
+
+		if isinstance(self._column_data, pandas_df):
+			return float(self._column_data.std())
 
 	def run(self) -> Dict[str, Any]:
 		"""

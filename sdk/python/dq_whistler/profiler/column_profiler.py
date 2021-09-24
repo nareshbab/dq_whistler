@@ -1,6 +1,8 @@
+import numpy as np
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
-from pyspark.sql.dataframe import DataFrame
+from typing import Dict, Any, List, Union
+from pandas.core.series import Series as pandas_df
+from pyspark.sql.dataframe import DataFrame as spark_df
 import pyspark.sql.functions as f
 from pyspark.sql.types import StringType, DoubleType, IntegerType
 from dq_whistler.constraints.constraint import Constraint
@@ -12,15 +14,16 @@ class ColumnProfiler(ABC):
     Base class for column profiler
     """
 
-    _column_data: DataFrame
+    _column_data: Union[spark_df, pandas_df]
     _config: Dict[str, Any]
     _constraints: List[Constraint]
 
-    def __init__(self, column_data: DataFrame, config: Dict[str, Any]):
+    def __init__(self, column_data: Union[spark_df, pandas_df], config: Dict[str, Any]):
         """
         Creates an instance of :obj:`ColumnProfiler`
         Args:
-            column_data (pyspark.sql.DataFrame): Column data as a spark dataframe to execute constraints
+            column_data (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data to
+            execute constraints
             config (Dict[str, Any]): Config containing all the constraints of a column along with expected data types
             Sample Dict::
             {
@@ -48,12 +51,24 @@ class ColumnProfiler(ABC):
         """
         Prepares a dataframe by doing pre validations
         """
-        if self._data_type == "string":
-            self._column_data.withColumn(self._column_name, f.col(self._column_name).cast(StringType()))
-        elif self._data_type == "number":
-            self._column_data.withColumn(self._column_name, f.col(self._column_name).cast(DoubleType()))
-        elif self._data_type == "integer":
-            self._column_data.withColumn(self._column_name, f.col(self._column_name).cast(IntegerType()))
+        if isinstance(self._column_data, spark_df):
+            if self._data_type == "string":
+                self._column_data.withColumn(self._column_name, f.col(self._column_name).cast(StringType()))
+            elif self._data_type == "number":
+                self._column_data.withColumn(self._column_name, f.col(self._column_name).cast(DoubleType()))
+            elif self._data_type == "integer":
+                self._column_data.withColumn(self._column_name, f.col(self._column_name).cast(IntegerType()))
+            else:
+                raise NotImplementedError
+        elif isinstance(self._column_data, pandas_df):
+            if self._data_type == "string":
+                self._column_data = self._column_data.apply(np.str)
+            elif self._data_type == "number":
+                self._column_data = self._column_data.apply(np.float)
+            elif self._data_type == "integer":
+                self._column_data = self._column_data.apply(np.int)
+            else:
+                raise NotImplementedError
         else:
             raise NotImplementedError
 
@@ -111,31 +126,39 @@ class ColumnProfiler(ABC):
             :obj:`int`: Count of null values in a column data
         """
         col_name = self._column_name
-        return self._column_data.select(
-            f.count(
-                f.when(
-                    f.col(col_name).contains("None") |
-                    f.col(col_name).contains("NULL") |
-                    (f.col(col_name) == "") |
-                    f.col(col_name).isNull() |
-                    f.isnan(col_name), col_name
-                )
-            ).alias("null_count")
-        ).first()[0]
+        if isinstance(self._column_data, spark_df):
+            return int(self._column_data.select(
+                f.count(
+                    f.when(
+                        f.col(col_name).contains("None") |
+                        f.col(col_name).contains("NULL") |
+                        (f.col(col_name) == "") |
+                        f.col(col_name).isNull() |
+                        f.isnan(col_name), col_name
+                    )
+                ).alias("null_count")
+            ).first()[0])
+
+        if isinstance(self._column_data, pandas_df):
+            return int(self._column_data.isnull().sum(axis=0))
 
     def get_unique_count(self) -> int:
         """
         Returns:
             :obj:`int`: Count of unique values in a column data
         """
-        return self._column_data.distinct().count()
+        if isinstance(self._column_data, spark_df):
+            return int(self._column_data.distinct().count())
+
+        if isinstance(self._column_data, pandas_df):
+            return int(self._column_data.nunique(dropna=True))
 
     def get_total_count(self) -> int:
         """
         Returns:
             :obj:`int`: Count of total values in a column data
         """
-        return self._column_data.count()
+        return int(self._column_data.count())
 
     def get_quality_score(self) -> float:
         """
@@ -155,32 +178,36 @@ class ColumnProfiler(ABC):
                 }
         """
         col_name = self._column_name
-        top_values = dict()
-        if self._data_type == "string":
-            top_values_rows = self._column_data \
-                .filter((f.col(col_name) != "") & (f.col(col_name).isNotNull()) & (f.col(col_name) != "null")) \
-                .groupby(col_name) \
-                .count() \
-                .sort(f.desc("count")) \
-                .toJSON() \
-                .take(10)
-        elif self._data_type == "number":
-            top_values_rows = self._column_data \
-                .filter(f.col(col_name).isNotNull()) \
-                .groupby(col_name) \
-                .count() \
-                .sort(f.desc("count")) \
-                .toJSON() \
-                .take(10)
-        else:
-            raise NotImplementedError
+        if isinstance(self._column_data, spark_df):
+            top_values = dict()
+            if self._data_type == "string":
+                top_values_rows = self._column_data \
+                    .filter((f.col(col_name) != "") & (f.col(col_name).isNotNull()) & (f.col(col_name) != "null")) \
+                    .groupby(col_name) \
+                    .count() \
+                    .sort(f.desc("count")) \
+                    .toJSON() \
+                    .take(10)
+            elif self._data_type == "number":
+                top_values_rows = self._column_data \
+                    .filter(f.col(col_name).isNotNull()) \
+                    .groupby(col_name) \
+                    .count() \
+                    .sort(f.desc("count")) \
+                    .toJSON() \
+                    .take(10)
+            else:
+                raise NotImplementedError
 
-        [
-            top_values.update(
-                {json.loads(row).get(col_name): json.loads(row)["count"]})
-            for row in top_values_rows
-        ]
-        return top_values
+            [
+                top_values.update(
+                    {json.loads(row).get(col_name): json.loads(row)["count"]})
+                for row in top_values_rows
+            ]
+            return top_values
+
+        if isinstance(self._column_data, pandas_df):
+            return json.loads(self._column_data.value_counts().iloc[:9].to_json())
 
     def get_custom_constraint_check(self) -> List[Dict[str, str]]:
         """

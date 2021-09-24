@@ -1,7 +1,8 @@
 from dq_whistler.profiler.column_profiler import ColumnProfiler
 from dq_whistler.constraints.string_type import *
-from pyspark.sql import DataFrame
-from typing import Dict, Any
+from pandas.core.series import Series as pandas_df
+from pyspark.sql.dataframe import DataFrame as spark_df
+from typing import Dict, Any, Union
 
 
 class StringProfiler(ColumnProfiler):
@@ -9,12 +10,12 @@ class StringProfiler(ColumnProfiler):
 	Class for String datatype profiler
 	"""
 
-	def __init__(self, column_data: DataFrame, config: Dict[str, str]):
+	def __init__(self, column_data: Union[spark_df, pandas_df], config: Dict[str, str]):
 		"""
 		Creates an instance of Column Profiler
 		Args:
-			column_data (pyspark.sql.DataFrame): Column data as a spark dataframe to execute constraints
-			config (Dict[str, Any]): Config containing all the constraints of a column along with expected datatypes
+			column_data (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data to execute constraints
+			config (Dict[str, Any]): Config containing all the constraints of a column along with expected data types
 			{
 				"name": "col_name",
 				"datatype": "col_data_type(number/string/date)",

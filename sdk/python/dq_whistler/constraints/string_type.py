@@ -1,6 +1,7 @@
 from dq_whistler.constraints.constraint import Constraint
-from typing import Dict
-from pyspark.sql import DataFrame
+from typing import Dict, Union
+from pandas.core.series import Series as pandas_df
+from pyspark.sql.dataframe import DataFrame as spark_df
 import pyspark.sql.functions as f
 
 
@@ -21,19 +22,23 @@ class Equal(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``eq`` to ``"abc"``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``eq`` to ``"abc"``, then the dataframe will have rows where
 			values are ``!= "abc"`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			f.col(self._column_name) != self._values
-		)
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				f.col(self._column_name) != self._values
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[data_frame != self._values]
 
 
 class NotEqual(Constraint):
@@ -53,19 +58,23 @@ class NotEqual(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``nt_eq`` to ``"abc"``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``nt_eq`` to ``"abc"``, then the dataframe will have rows where
 			values are ``== "abc"`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			f.col(self._column_name) == self._values
-		)
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				f.col(self._column_name) == self._values
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[data_frame == self._values]
 
 
 class Contains(Constraint):
@@ -85,19 +94,23 @@ class Contains(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``contains`` ``"abc"``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``contains`` ``"abc"``, then the dataframe will have rows where
 			values ``does not contains "abc"`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			~f.col(self._column_name).contains(self._values)
-		)
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				~f.col(self._column_name).contains(self._values)
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[~data_frame.str.contains(self._values)]
 
 
 class NotContains(Constraint):
@@ -117,19 +130,23 @@ class NotContains(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``not_contains`` ``abc``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``not_contains`` ``abc``, then the dataframe will have rows where
 			values ``contains "abc"`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			f.col(self._column_name).contains(self._values)
-		)
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				f.col(self._column_name).contains(self._values)
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[data_frame.str.contains(self._values)]
 
 
 class StartsWith(Constraint):
@@ -149,19 +166,23 @@ class StartsWith(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``starts_with`` ``"abc"``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``starts_with`` ``"abc"``, then the dataframe will have rows where
 			values ``does not starts with "abc"`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			~f.col(self._column_name).startswith(self._values)
-		)
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				~f.col(self._column_name).startswith(self._values)
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[~data_frame.str.startswith(self._values)]
 
 
 class NotStartsWith(Constraint):
@@ -181,19 +202,23 @@ class NotStartsWith(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``not_starts_with`` ``"abc"``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``not_starts_with`` ``"abc"``, then the dataframe will have rows where
 			values ``starts with "abc"`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			f.col(self._column_name).startswith(self._values)
-		)
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				f.col(self._column_name).startswith(self._values)
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[data_frame.str.startswith(self._values)]
 
 
 class EndsWith(Constraint):
@@ -213,19 +238,24 @@ class EndsWith(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``ends_with`` ``"abc"``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``ends_with`` ``"abc"``, then the dataframe will have rows where
 			values ``does not ends with "abc"`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			~f.col(self._column_name).endswith(self._values)
-		)
+
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				~f.col(self._column_name).endswith(self._values)
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[~data_frame.str.endswith(self._values)]
 
 
 class NotEndsWith(Constraint):
@@ -245,19 +275,23 @@ class NotEndsWith(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``not_ends_with`` ``"abc"``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``not_ends_with`` ``"abc"``, then the dataframe will have rows where
 			values ``ends with "abc"`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			f.col(self._column_name).endswith(self._values)
-		)
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				f.col(self._column_name).endswith(self._values)
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[data_frame.str.endswith(self._values)]
 
 
 class IsIn(Constraint):
@@ -277,19 +311,23 @@ class IsIn(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``is_in`` ``["abc", "xyz"]``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``is_in`` ``["abc", "xyz"]``, then the dataframe will have rows where
 			values ``are not in ["abc", "xyz"]`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			~f.col(self._column_name).isin(*self._values)
-		)
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				~f.col(self._column_name).isin(*self._values)
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[~data_frame.isin(self._values)]
 
 
 class NotIn(Constraint):
@@ -309,19 +347,23 @@ class NotIn(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``not_in`` ``["abc", "xyz"]``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``not_in`` ``["abc", "xyz"]``, then the dataframe will have rows where
 			values ``are in ["abc", "xyz"]`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			f.col(self._column_name).isin(self._values)
-		)
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				f.col(self._column_name).isin(*self._values)
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[data_frame.isin(self._values)]
 
 
 class Regex(Constraint):
@@ -341,16 +383,21 @@ class Regex(Constraint):
 	def __init__(self, constraint: Dict[str, str], column_name: str):
 		super().__init__(constraint, column_name)
 
-	def get_failure_df(self, data_frame: DataFrame) -> DataFrame:
+	def get_failure_df(self, data_frame: Union[spark_df, pandas_df]) -> Union[spark_df, pandas_df]:
 		"""
 		Args:
-			data_frame (:obj:`pyspark.sql.DataFrame`): The column data as spark dataframe
+			data_frame (:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`): Column data
 
 		Returns:
-			:obj:`pyspark.sql.DataFrame`: The dataframe with ``invalid cases`` as per the constraint
-			for ex: if constraint is ``regex`` ``^[A-Za-z]$``, then the dataframe will have rows where
+			:obj:`pyspark.sql.DataFrame` | :obj:`pandas.core.series.Series`: The dataframe with ``invalid cases``
+			as per the constraint for ex: if constraint is ``regex`` ``^[A-Za-z]$``, then the dataframe will have rows where
 			values ``does not`` satisfies the regex ``^[A-Za-z]$`` (i.e only invalid cases)
 		"""
-		return data_frame.filter(
-			~f.col(self._column_name).rlike(self._values)
-		)
+
+		if isinstance(data_frame, spark_df):
+			return data_frame.filter(
+				~f.col(self._column_name).rlike(self._values)
+			)
+
+		if isinstance(data_frame, pandas_df):
+			return data_frame[~data_frame.str.match(pat=self._values)]
